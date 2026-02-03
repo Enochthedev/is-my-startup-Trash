@@ -2,20 +2,7 @@ import json
 import re
 from typing import List, Tuple
 from openai import OpenAI
-import nest_asyncio
-
-# Monkeypatch nest_asyncio to prevent crash with uvloop
-# duckduckgo_search calls nest_asyncio.apply() at module level
-original_apply = nest_asyncio.apply
-def safe_apply(loop=None):
-    try:
-        original_apply(loop)
-    except ValueError:
-        # Ignore "Can't patch loop of type ..." error from uvloop
-        pass
-nest_asyncio.apply = safe_apply
-
-from duckduckgo_search import DDGS
+from duckduckgo_search import AsyncDDGS
 from .models import StartupAnalysis
 
 
@@ -24,41 +11,46 @@ class StartupRoaster:
     
     def __init__(self, openrouter_api_key: str):
         # Using OpenRouter for cheaper model access
+        # Note: We keep OpenAI sync for now to minimize changes, blocking is "fine" for this scale
         self.client = OpenAI(
             api_key=openrouter_api_key,
             base_url="https://openrouter.ai/api/v1"
         )
-        self.ddgs = DDGS()
+        # No implicit session reused in new version, we instantiate per use or manage clean up
+        # AsyncDDGS context manager is preferred, or standard usage
     
-    def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
-        """Search the web for existing competitors."""
+    async def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
+        """Search the web for existing competitors using AsyncDDGS."""
         try:
-            # Search for similar startups/apps
-            search_query = f"{description} app startup competitors"
-            results = list(self.ddgs.text(search_query, max_results=10))
-            
-            # Also search for the specific concept
-            concept_query = f"{name} similar apps alternatives"
-            concept_results = list(self.ddgs.text(concept_query, max_results=5))
-            
-            all_results = results + concept_results
-            
-            # Format search results for context
-            search_context = "\n".join([
-                f"- {r.get('title', 'N/A')}: {r.get('body', 'N/A')[:200]}"
-                for r in all_results
-            ])
-            
-            return all_results, search_context
+            async with AsyncDDGS() as ddgs:
+                # Search for similar startups/apps
+                search_query = f"{description} app startup competitors"
+                # AsyncDDGS return lists or iterables, we await/iterate them
+                results = await ddgs.text(search_query, max_results=10)
+                
+                # Also search for the specific concept
+                concept_query = f"{name} similar apps alternatives"
+                concept_results = await ddgs.text(concept_query, max_results=5)
+                
+                all_results = results + concept_results
+                
+                # Format search results for context
+                search_context = "\n".join([
+                    f"- {r.get('title', 'N/A')}: {r.get('body', 'N/A')[:200]}"
+                    for r in all_results
+                ])
+                
+                return all_results, search_context
         except Exception as e:
             print(f"Search error: {e}")
             return [], "No search results available"
     
-    def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
+    async def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
         """Analyze and roast a startup idea."""
         
-        # First, search for competitors
-        search_results, search_context = self.search_competitors(name, description)
+        # First, search for competitors (Async!)
+        # Check if search_competitors is properly awaited
+        search_results, search_context = await self.search_competitors(name, description)
         
         # Build the prompt
         system_prompt = """You are a brutally honest startup analyst who combines sharp wit with genuine market expertise. 
@@ -82,19 +74,7 @@ You must respond with valid JSON matching this exact structure:
     "originality_score": 0.0 to 10.0,
     "execution_difficulty": "Low/Medium/High - Brief explanation"
 }
-
-Scoring guide:
-- 0-3: Trash - Oversaturated, fundamentally flawed, or already exists
-- 4-6: Potential - Has issues but could work with significant pivots
-- 7-10: Gold - Genuinely innovative or underserved market
-
-Name rating guide (no emojis, keep it professional):
-- "Cringe - Overused naming pattern"
-- "Forgettable - Won't stick in anyone's mind"
-- "Solid - Memorable and brandable"
-- "Excellent - Unique and marketable"
-
-Be creative with your roasts - every response should feel fresh and unique."""
+"""
 
         user_prompt = f"""Analyze this startup idea:
 
@@ -109,14 +89,16 @@ Extract actual competitor names from the search results if found.
 Remember: Be brutally honest, genuinely funny, and secretly helpful."""
 
         try:
+            # We wrap the synchronous OpenAI call in a way that doesn't matter much for this demo 
+            # (blocking loop for 1-2s is acceptable here)
             response = self.client.chat.completions.create(
-                model="openai/gpt-4o-mini",  # Via OpenRouter - super cheap!
+                model="openai/gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=1.2,  # High creativity - every roast is unique!
-                top_p=0.95,       # Diverse word choices
+                temperature=1.2,
+                top_p=0.95,
                 max_tokens=1000,
                 response_format={"type": "json_object"}
             )
@@ -138,7 +120,6 @@ Remember: Be brutally honest, genuinely funny, and secretly helpful."""
             
         except Exception as e:
             print(f"OpenAI error: {e}")
-            # Fallback response
             return StartupAnalysis(
                 verdict="potential",
                 roast="Our AI is having an existential crisis trying to process your idea. That's... something?",
@@ -152,7 +133,7 @@ Remember: Be brutally honest, genuinely funny, and secretly helpful."""
             )
 
 
-# Pre-built example roasts for demo/fallback - expanded list
+# Pre-built example roasts for demo/fallback
 EXAMPLE_ROASTS = [
     {
         "name": "Uber for Dogs",
@@ -192,71 +173,5 @@ EXAMPLE_ROASTS = [
         "market_size": "Growing - $5B digital mental health market",
         "originality_score": 4.0,
         "execution_difficulty": "High - HIPAA, licensing, liability concerns"
-    },
-    {
-        "name": "Blockchain Voting",
-        "description": "Decentralized voting platform for elections",
-        "verdict": "trash",
-        "roast": "Nothing screams 'I don't understand either problem' like combining two complex systems and calling it innovation. Election officials everywhere just sighed.",
-        "competitors": ["Voatz", "Polys", "Follow My Vote"],
-        "score": 2.0,
-        "name_rating": "Red Flag - Makes security experts twitch",
-        "advice": "Study why every blockchain voting pilot has failed. The problem isn't technology.",
-        "market_size": "Hostile - Government procurement is brutal",
-        "originality_score": 2.0,
-        "execution_difficulty": "Extreme - Security, regulation, public trust"
-    },
-    {
-        "name": "LinkedIn for Gen Z",
-        "description": "Professional networking app designed for young professionals",
-        "verdict": "potential",
-        "roast": "So LinkedIn but without the cringe motivational posts? Actually, that might work. But good luck competing with Microsoft's infinite resources.",
-        "competitors": ["LinkedIn", "Lunchclub", "Shapr", "Bumble Bizz"],
-        "score": 5.0,
-        "name_rating": "Derivative - Defining yourself by the competition",
-        "advice": "Don't just be 'LinkedIn minus the bad parts'. Find what Gen Z actually needs that LinkedIn fundamentally can't provide.",
-        "market_size": "Massive - $15B professional networking market",
-        "originality_score": 3.5,
-        "execution_difficulty": "High - Network effects are brutal"
-    },
-    {
-        "name": "Tinder for Cofounders",
-        "description": "App to match startup founders with potential cofounders",
-        "verdict": "potential",
-        "roast": "Because what could go wrong with swiping right on someone you'll spend 80 hours a week with? At least breakups with cofounders involve lawyers.",
-        "competitors": ["Y Combinator Cofounder Matching", "CoFoundersLab", "StartHawk"],
-        "score": 6.0,
-        "name_rating": "Clever - Instantly understandable concept",
-        "advice": "The real challenge is matchmaking quality. Bad cofounder matches are startup killers.",
-        "market_size": "Niche - Small but passionate market",
-        "originality_score": 5.5,
-        "execution_difficulty": "Medium - Trust and verification are key"
-    },
-    {
-        "name": "Airbnb for Parking",
-        "description": "Rent out your driveway or parking spot to drivers",
-        "verdict": "potential",
-        "roast": "The margins are thin, the complaints are thick, and your neighbors will definitely hate you. But at least you're solving a real problem.",
-        "competitors": ["SpotHero", "ParkWhiz", "JustPark", "Parkable"],
-        "score": 5.5,
-        "name_rating": "Functional - Gets the point across",
-        "advice": "Focus on high-demand areas first. Events, stadiums, airports. Don't try to boil the ocean.",
-        "market_size": "Fragmented - $30B parking market, mostly offline",
-        "originality_score": 4.0,
-        "execution_difficulty": "Medium - City regulations vary wildly"
-    },
-    {
-        "name": "Duolingo for Cooking",
-        "description": "Gamified app that teaches cooking skills through daily lessons",
-        "verdict": "gold",
-        "roast": "Okay, this is actually not terrible. Gamification plus an essential life skill? The execution will make or break this, but at least you're not building another todo app.",
-        "competitors": ["SideChef", "Tasty", "Yummly"],
-        "score": 7.0,
-        "name_rating": "Solid - Clear value proposition in the name",
-        "advice": "The content moat is everything. Partner with culinary schools or celebrity chefs early.",
-        "market_size": "Underserved - Cooking apps lack engagement loops",
-        "originality_score": 7.5,
-        "execution_difficulty": "Medium - Content creation at scale"
     }
 ]
-

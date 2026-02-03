@@ -99,7 +99,7 @@ async def analyze_startup(startup: StartupInput):
     # Use the AI roaster if available
     if roaster:
         try:
-            return roaster.analyze_startup(startup.name, startup.description)
+            return await roaster.analyze_startup(startup.name, startup.description)
         except Exception as e:
             print(f"Roaster error: {e}")
             raise HTTPException(
