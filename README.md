@@ -53,7 +53,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # Add your OPENROUTER_API_KEY
 
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --loop asyncio
 ```
 
 API docs: http://localhost:8000/docs

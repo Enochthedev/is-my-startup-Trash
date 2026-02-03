@@ -41,16 +41,26 @@ class StartupRoaster:
                 ])
                 
                 return all_results, search_context
-        except Exception as e:
-            print(f"Search error: {e}")
-            return [], "No search results available"
+        except BaseException as e:
+            print(f"CRITICAL Search error ({type(e).__name__}): {e}")
+            import traceback
+            traceback.print_exc()
+            return [], f"Search failed: {str(e)}"
     
     async def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
         """Analyze and roast a startup idea."""
         
         # First, search for competitors (Async!)
-        # Check if search_competitors is properly awaited
-        search_results, search_context = await self.search_competitors(name, description)
+        try:
+            search_response = await self.search_competitors(name, description)
+            if search_response:
+                search_results, search_context = search_response
+            else:
+                print("Warning: search_competitors returned None")
+                search_results, search_context = [], "Search failed silently"
+        except Exception as e:
+            print(f"Search unpacking error: {e}")
+            search_results, search_context = [], "Search error"
         
         # Build the prompt
         system_prompt = """You are a brutally honest startup analyst who combines sharp wit with genuine market expertise. 
