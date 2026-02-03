@@ -2,6 +2,19 @@ import json
 import re
 from typing import List, Tuple
 from openai import OpenAI
+import nest_asyncio
+
+# Monkeypatch nest_asyncio to prevent crash with uvloop
+# duckduckgo_search calls nest_asyncio.apply() at module level
+original_apply = nest_asyncio.apply
+def safe_apply(loop=None):
+    try:
+        original_apply(loop)
+    except ValueError:
+        # Ignore "Can't patch loop of type ..." error from uvloop
+        pass
+nest_asyncio.apply = safe_apply
+
 from duckduckgo_search import DDGS
 from .models import StartupAnalysis
 
