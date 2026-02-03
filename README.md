@@ -6,6 +6,10 @@
 ![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge)
 ![Competitors Found](https://img.shields.io/badge/Competitors-Found-orange?style=for-the-badge)
 
+<div align="center">
+  <img src="frontend/public/og-image.png" alt="Is My Startup Trash - App Screenshot" width="100%" />
+</div>
+
 ## What This Does
 
 Submit your startup idea, we search the web for competitors, GPT-4 delivers the verdict.
