@@ -2,7 +2,8 @@ import json
 import re
 from typing import List, Tuple
 from openai import OpenAI
-from duckduckgo_search import AsyncDDGS
+from duckduckgo_search import DDGS
+import asyncio
 from .models import StartupAnalysis
 
 
@@ -11,26 +12,23 @@ class StartupRoaster:
     
     def __init__(self, openrouter_api_key: str):
         # Using OpenRouter for cheaper model access
-        # Note: We keep OpenAI sync for now to minimize changes, blocking is "fine" for this scale
         self.client = OpenAI(
             api_key=openrouter_api_key,
             base_url="https://openrouter.ai/api/v1"
         )
-        # No implicit session reused in new version, we instantiate per use or manage clean up
-        # AsyncDDGS context manager is preferred, or standard usage
     
-    async def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
-        """Search the web for existing competitors using AsyncDDGS."""
+    def _sync_search(self, name: str, description: str) -> Tuple[List[str], str]:
+        """Synchronous implementation of competitor search."""
         try:
-            async with AsyncDDGS() as ddgs:
+            with DDGS() as ddgs:
                 # Search for similar startups/apps
                 search_query = f"{description} app startup competitors"
-                # AsyncDDGS return lists or iterables, we await/iterate them
-                results = await ddgs.text(search_query, max_results=10)
+                # DDGS returns iterator, convert to list
+                results = list(ddgs.text(search_query, max_results=10))
                 
                 # Also search for the specific concept
                 concept_query = f"{name} similar apps alternatives"
-                concept_results = await ddgs.text(concept_query, max_results=5)
+                concept_results = list(ddgs.text(concept_query, max_results=5))
                 
                 all_results = results + concept_results
                 
@@ -41,16 +39,22 @@ class StartupRoaster:
                 ])
                 
                 return all_results, search_context
-        except BaseException as e:
-            print(f"CRITICAL Search error ({type(e).__name__}): {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception as e:
+            print(f"Sync Search error: {e}")
             return [], f"Search failed: {str(e)}"
+
+    async def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
+        """Search the web for existing competitors using sync DDGS in a thread."""
+        try:
+            return await asyncio.to_thread(self._sync_search, name, description)
+        except Exception as e:
+            print(f"Thread execution error: {e}")
+            return [], "Search thread failed"
     
     async def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
         """Analyze and roast a startup idea."""
         
-        # First, search for competitors (Async!)
+        # First, search for competitors (Threaded Sync)
         try:
             search_response = await self.search_competitors(name, description)
             if search_response:
