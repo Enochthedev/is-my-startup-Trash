@@ -1,0 +1,199 @@
+/* Result Card Styles */
+
+.result-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Verdict Card */
+.verdict-card {
+  padding: var(--space-2xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.verdict-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--verdict-gradient);
+  opacity: 0.1;
+}
+
+.verdict-emoji {
+  font-size: 4rem;
+  margin-bottom: var(--space-md);
+  animation: bounce 1s ease-in-out;
+}
+
+.verdict-label {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--verdict-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-sm);
+}
+
+.verdict-message {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+/* Score Ring */
+.score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.score-ring {
+  width: 120px;
+  height: 120px;
+  position: relative;
+}
+
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+}
+
+.score-progress {
+  animation: scoreReveal 1s ease-out forwards;
+}
+
+@keyframes scoreReveal {
+  from {
+    stroke-dasharray: 0 283;
+  }
+}
+
+.score-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Roast Card */
+.roast-card {
+  padding: var(--space-xl);
+}
+
+.roast-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.roast-icon {
+  font-size: 1.5rem;
+}
+
+.roast-header h3 {
+  font-size: 1.25rem;
+}
+
+.roast-text {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+/* Detail Cards */
+.detail-card,
+.competitors-card,
+.advice-card {
+  padding: var(--space-xl);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.detail-icon {
+  font-size: 1.25rem;
+}
+
+.detail-header h3 {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.name-rating {
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+}
+
+/* Competitors */
+.competitors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.competitor-tag {
+  padding: var(--space-xs) var(--space-md);
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  color: var(--color-accent-trash);
+}
+
+/* Advice */
+.advice-text {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Actions */
+.result-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .verdict-card {
+    padding: var(--space-xl);
+  }
+  
+  .verdict-emoji {
+    font-size: 3rem;
+  }
+  
+  .verdict-label {
+    font-size: 2rem;
+  }
+  
+  .result-actions {
+    flex-direction: column;
+  }
+  
+  .result-actions .btn {
+    width: 100%;
+  }
+}
