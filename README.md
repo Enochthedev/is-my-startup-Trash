@@ -1,6 +1,10 @@
-# Is My Startup Trash?
+# 🗑️ Is My Startup Trash?
 
 > The only startup validator honest enough to tell you the truth. No sugarcoating. No "circle back." Just brutal honesty.
+
+![Verdict: Probably Trash](https://img.shields.io/badge/Verdict-Probably_Trash-red?style=for-the-badge)
+![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge)
+![Competitors Found](https://img.shields.io/badge/Competitors-Found-orange?style=for-the-badge)
 
 ## What This Does
 
