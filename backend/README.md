@@ -1,48 +1,43 @@
-# 🗑️ Is My Startup Trash? - Backend API
+# Backend API
 
-FastAPI backend for the Startup Roaster. Powered by GPT-4o-mini via OpenRouter and web search.
+FastAPI backend for the startup roaster. Uses GPT-4o-mini via OpenRouter for analysis and DuckDuckGo for competitor search.
 
-## Quick Start
+## Setup
 
 ```bash
-# Create virtual environment
 python -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 
-# Set your OpenRouter API key (get one at https://openrouter.ai/keys)
 cp .env.example .env
-# Edit .env with your key
+# Add your OPENROUTER_API_KEY (get one at https://openrouter.ai/keys)
 
-# Run the server
 uvicorn app.main:app --reload
 ```
 
-## API Endpoints
+## Endpoints
 
 - `GET /` - Health check
-- `GET /health` - Detailed health status
-- `POST /analyze-startup` - Analyze and roast a startup idea
-- `GET /examples` - Get example roasts
+- `GET /health` - Detailed status
+- `POST /analyze-startup` - Analyze a startup idea
+- `GET /examples` - Example roasts
 - `GET /docs` - Swagger UI
 
-## Environment Variables
+## Environment variables
 
-| Variable             | Description                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| `OPENROUTER_API_KEY` | Your OpenRouter API key (get one at [openrouter.ai/keys](https://openrouter.ai/keys)) |
-| `PORT`               | Server port (default: 8000)                                                           |
+| Variable             | Description                 |
+| -------------------- | --------------------------- |
+| `OPENROUTER_API_KEY` | API key from openrouter.ai  |
+| `PORT`               | Server port (default: 8000) |
 
 ## Cost
 
-Using **GPT-4o-mini via OpenRouter**: ~$0.0003 per roast (~3,333 roasts per $1)
+GPT-4o-mini via OpenRouter costs roughly $0.0003 per request.
 
-## Deployment to Railway
+## Railway deployment
 
-1. Connect your GitHub repo to Railway
+1. Connect GitHub repo to Railway
 2. Set `OPENROUTER_API_KEY` in environment variables
-3. Railway will auto-detect Python and deploy
+3. Deploy
 
 The `railway.json` and `Procfile` are already configured.

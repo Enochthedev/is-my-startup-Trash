@@ -1,41 +1,33 @@
-# 🗑️ Is My Startup Trash? - Frontend
+# Frontend
 
-React + Vite frontend with a slick dark mode glassmorphism design.
+React + Vite frontend with dark mode UI.
 
-## Quick Start
+## Setup
 
 ```bash
-# Install dependencies
 npm install
-
-# Run dev server
 npm run dev
+```
 
-# Build for production
+## Build
+
+```bash
 npm run build
 ```
 
-## Environment Variables
+## Environment variables
 
 Create a `.env` file:
 
 ```
-VITE_API_URL=https://your-railway-backend.railway.app
+VITE_API_URL=https://your-backend.railway.app
 ```
 
-For local development, the API URL defaults to `http://localhost:8000`.
+Defaults to `http://localhost:8000` for local development.
 
-## Deployment to Vercel
+## Vercel deployment
 
-1. Connect your GitHub repo to Vercel
+1. Connect GitHub repo to Vercel
 2. Set root directory to `frontend`
 3. Add `VITE_API_URL` environment variable
-4. Deploy!
-
-## Features
-
-- 🎨 Dark mode glassmorphism design
-- ✨ Smooth animations
-- 📱 Fully responsive
-- 🔄 Loading states
-- 📤 Share functionality
+4. Deploy

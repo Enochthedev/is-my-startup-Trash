@@ -37,9 +37,11 @@ We'll tell you if your startup is trash in seconds.
 )
 
 # CORS middleware for frontend
+# CORS middleware for frontend
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -94,12 +96,6 @@ async def analyze_startup(startup: StartupInput):
     - `gold` - Actually innovative (rare!)
     """
     
-    # Check for example matches first (for demos/testing)
-    name_lower = startup.name.lower()
-    for key, example in EXAMPLE_ROASTS.items():
-        if key in name_lower:
-            return StartupAnalysis(**example)
-    
     # Use the AI roaster if available
     if roaster:
         try:
@@ -111,34 +107,48 @@ async def analyze_startup(startup: StartupInput):
                 detail="Our AI is having a breakdown. Even it couldn't handle your startup idea."
             )
     else:
-        # Demo mode fallback
+        # Demo mode - return random example
+        import random
+        example = random.choice(EXAMPLE_ROASTS)
         return StartupAnalysis(
-            verdict="potential",
-            roast=f"'{startup.name}' sounds like something a VC would pretend to understand. We're running in demo mode, so we can't fully roast you yet. Configure your OpenRouter API key for the full experience.",
-            competitors=["Demo Mode Inc.", "Configure Your API Key LLC"],
-            score=5.0,
-            name_rating="🤖 Demo Mode - Cannot fully judge your naming choices",
-            advice="Set up the OPENROUTER_API_KEY to unlock our full roasting potential"
+            verdict=example["verdict"],
+            roast=f"[Demo Mode] {example['roast']}",
+            competitors=example["competitors"],
+            score=example["score"],
+            name_rating=example["name_rating"],
+            advice=example["advice"],
+            market_size=example.get("market_size"),
+            originality_score=example.get("originality_score"),
+            execution_difficulty=example.get("execution_difficulty")
         )
+
+
+@app.get("/random-example", tags=["Examples"])
+async def get_random_example():
+    """Get a random example to try - each click gives a different startup idea."""
+    import random
+    example = random.choice(EXAMPLE_ROASTS)
+    return {
+        "name": example["name"],
+        "description": example["description"]
+    }
 
 
 @app.get("/examples", tags=["Examples"])
 async def get_examples():
-    """Get example startup roasts for inspiration (or warning)."""
+    """Get all example startup roasts for inspiration (or warning)."""
+    import random
+    # Return 3 random examples each time
+    selected = random.sample(EXAMPLE_ROASTS, min(3, len(EXAMPLE_ROASTS)))
     return {
         "examples": [
             {
-                "input": {"name": "Uber for Dogs", "description": "On-demand dog walking"},
-                "output": EXAMPLE_ROASTS["uber for dogs"]
-            },
-            {
-                "input": {"name": "Netflix for Books", "description": "Subscription book service"},
-                "output": EXAMPLE_ROASTS["netflix for books"]
-            },
-            {
-                "input": {"name": "AI Therapist", "description": "Mental health chatbot"},
-                "output": EXAMPLE_ROASTS["ai therapist"]
+                "input": {"name": ex["name"], "description": ex["description"]},
+                "output": {k: v for k, v in ex.items() if k not in ["name", "description"]}
             }
+            for ex in selected
         ],
-        "disclaimer": "These are just examples. Your actual roast may be even more savage."
+        "total_examples": len(EXAMPLE_ROASTS),
+        "disclaimer": "These are just examples. Your actual roast will be unique."
     }
+
