@@ -2,9 +2,10 @@ import json
 import re
 from typing import List, Tuple
 from openai import OpenAI
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import asyncio
 from .models import StartupAnalysis
+from .cache import search_cache, response_cache
 
 
 class StartupRoaster:
@@ -44,15 +45,34 @@ class StartupRoaster:
             return [], f"Search failed: {str(e)}"
 
     async def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
-        """Search the web for existing competitors using sync DDGS in a thread."""
+        """Search the web for existing competitors using sync DDGS in a thread with caching."""
+        # Create cache key from description (name can vary for same idea)
+        cache_key = f"{name}:{description}"
+        
+        # Check cache first
+        cached = search_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         try:
-            return await asyncio.to_thread(self._sync_search, name, description)
+            result = await asyncio.to_thread(self._sync_search, name, description)
+            # Cache successful results
+            if result and result[0]:  # Has actual results
+                search_cache.set(cache_key, result)
+            return result
         except Exception as e:
             print(f"Thread execution error: {e}")
-            return [], "Search thread failed"
+            # Graceful fallback - return empty results so AI can still work
+            return [], "Search unavailable - analyzing without competitor data"
     
     async def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
-        """Analyze and roast a startup idea."""
+        """Analyze and roast a startup idea with response caching."""
+        # Check response cache first
+        cache_key = f"{name}:{description}"
+        cached_response = response_cache.get(cache_key)
+        if cached_response is not None:
+            print("[Roaster] Returning cached AI response")
+            return cached_response
         
         # First, search for competitors (Threaded Sync)
         try:
@@ -120,7 +140,7 @@ Remember: Be brutally honest, genuinely funny, and secretly helpful."""
             result = json.loads(response.choices[0].message.content)
             
             # Validate and return with all metrics
-            return StartupAnalysis(
+            analysis = StartupAnalysis(
                 verdict=result.get("verdict", "trash"),
                 roast=result.get("roast", "Our AI is speechless. That's either really good or really bad."),
                 competitors=result.get("competitors", [])[:10],
@@ -131,6 +151,10 @@ Remember: Be brutally honest, genuinely funny, and secretly helpful."""
                 originality_score=min(10, max(0, float(result.get("originality_score", 5)))) if result.get("originality_score") else None,
                 execution_difficulty=result.get("execution_difficulty")
             )
+            
+            # Cache the successful response
+            response_cache.set(cache_key, analysis)
+            return analysis
             
         except Exception as e:
             print(f"OpenAI error: {e}")
