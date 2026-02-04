@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import StartupForm from './components/StartupForm'
 import ResultCard from './components/ResultCard'
 import ExamplesSection from './components/ExamplesSection'
@@ -107,6 +108,9 @@ function App() {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Vercel Analytics */}
+      <Analytics />
     </div>
   )
 }
