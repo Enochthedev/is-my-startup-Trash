@@ -180,19 +180,19 @@
   .verdict-card {
     padding: var(--space-xl);
   }
-  
+
   .verdict-emoji {
     font-size: 3rem;
   }
-  
+
   .verdict-label {
     font-size: 2rem;
   }
-  
+
   .result-actions {
     flex-direction: column;
   }
-  
+
   .result-actions .btn {
     width: 100%;
   }

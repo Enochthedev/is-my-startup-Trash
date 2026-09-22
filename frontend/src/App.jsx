@@ -28,7 +28,9 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to analyze your startup. Even our servers are skeptical.')
+        throw new Error(
+          'Failed to analyze your startup. Even our servers are skeptical.',
+        )
       }
 
       const data = await response.json()
@@ -54,16 +56,16 @@ function App() {
             <span className="badge-emoji">🗑️</span>
             <span>Brutally Honest Feedback</span>
           </div>
-          
+
           <h1 className="hero-title">
             Is My Startup <span className="text-gradient-trash">Trash?</span>
           </h1>
-          
+
           <p className="hero-subtitle">
-            Get AI-powered feedback that VCs are too polite to give you. 
-            We search the web, find your competitors, and deliver the truth.
+            Get AI-powered feedback that VCs are too polite to give you. We
+            search the web, find your competitors, and deliver the truth.
           </p>
-          
+
           <div className="hero-stats">
             <div className="stat">
               <span className="stat-value">47+</span>
@@ -81,7 +83,7 @@ function App() {
             </div>
           </div>
         </div>
-        
+
         <div className="hero-glow"></div>
       </header>
 
@@ -89,16 +91,13 @@ function App() {
       <main className="main">
         <div className="container">
           {!result ? (
-            <StartupForm 
-              onSubmit={analyzeStartup} 
-              loading={loading} 
+            <StartupForm
+              onSubmit={analyzeStartup}
+              loading={loading}
               error={error}
             />
           ) : (
-            <ResultCard 
-              result={result} 
-              onReset={resetForm}
-            />
+            <ResultCard result={result} onReset={resetForm} />
           )}
         </div>
       </main>
@@ -108,7 +107,7 @@ function App() {
 
       {/* Footer */}
       <Footer />
-      
+
       {/* Vercel Analytics */}
       <Analytics />
     </div>

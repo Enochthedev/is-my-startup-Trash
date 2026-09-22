@@ -39,8 +39,12 @@ function StartupForm({ onSubmit, loading, error }) {
     <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm">
       <CardContent className="p-6 md:p-8">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Drop Your Idea 💡</h2>
-          <p className="text-zinc-400 text-sm">We'll search the web and tell you the truth.</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Drop Your Idea 💡
+          </h2>
+          <p className="text-zinc-400 text-sm">
+            We'll search the web and tell you the truth.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -95,7 +99,7 @@ function StartupForm({ onSubmit, loading, error }) {
             >
               {exampleLoading ? '...' : '🎲 Random Idea'}
             </Button>
-            
+
             <Button
               type="submit"
               disabled={loading || !name.trim() || !description.trim()}

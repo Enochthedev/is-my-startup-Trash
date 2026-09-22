@@ -1,22 +1,23 @@
+import asyncio
 import json
 from typing import List, Tuple
-from openai import OpenAI
+
 from ddgs import DDGS
-import asyncio
+from openai import OpenAI
+
+from .cache import response_cache, search_cache
 from .models import StartupAnalysis
-from .cache import search_cache, response_cache
 
 
 class StartupRoaster:
     """The Startup Roaster - crushing dreams since 2024."""
-    
+
     def __init__(self, openrouter_api_key: str):
         # Using OpenRouter for cheaper model access
         self.client = OpenAI(
-            api_key=openrouter_api_key,
-            base_url="https://openrouter.ai/api/v1"
+            api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1"
         )
-    
+
     def _sync_search(self, name: str, description: str) -> Tuple[List[str], str]:
         """Synchronous implementation of competitor search."""
         try:
@@ -25,34 +26,38 @@ class StartupRoaster:
                 search_query = f"{description} app startup competitors"
                 # DDGS returns iterator, convert to list
                 results = list(ddgs.text(search_query, max_results=10))
-                
+
                 # Also search for the specific concept
                 concept_query = f"{name} similar apps alternatives"
                 concept_results = list(ddgs.text(concept_query, max_results=5))
-                
+
                 all_results = results + concept_results
-                
+
                 # Format search results for context
-                search_context = "\n".join([
-                    f"- {r.get('title', 'N/A')}: {r.get('body', 'N/A')[:200]}"
-                    for r in all_results
-                ])
-                
+                search_context = "\n".join(
+                    [
+                        f"- {r.get('title', 'N/A')}: {r.get('body', 'N/A')[:200]}"
+                        for r in all_results
+                    ]
+                )
+
                 return all_results, search_context
         except Exception as e:
             print(f"Sync Search error: {e}")
             return [], f"Search failed: {str(e)}"
 
-    async def search_competitors(self, name: str, description: str) -> Tuple[List[str], str]:
+    async def search_competitors(
+        self, name: str, description: str
+    ) -> Tuple[List[str], str]:
         """Search the web for existing competitors using sync DDGS in a thread with caching."""
         # Create cache key from description (name can vary for same idea)
         cache_key = f"{name}:{description}"
-        
+
         # Check cache first
         cached = search_cache.get(cache_key)
         if cached is not None:
             return cached
-        
+
         try:
             result = await asyncio.to_thread(self._sync_search, name, description)
             # Cache successful results
@@ -63,7 +68,7 @@ class StartupRoaster:
             print(f"Thread execution error: {e}")
             # Graceful fallback - return empty results so AI can still work
             return [], "Search unavailable - analyzing without competitor data"
-    
+
     async def analyze_startup(self, name: str, description: str) -> StartupAnalysis:
         """Analyze and roast a startup idea with response caching."""
         # Check response cache first
@@ -72,7 +77,7 @@ class StartupRoaster:
         if cached_response is not None:
             print("[Roaster] Returning cached AI response")
             return cached_response
-        
+
         # First, search for competitors (Threaded Sync)
         try:
             search_response = await self.search_competitors(name, description)
@@ -84,7 +89,7 @@ class StartupRoaster:
         except Exception as e:
             print(f"Search unpacking error: {e}")
             _, search_context = [], "Search error"
-        
+
         # Build the prompt
         system_prompt = """You are a brutally honest startup analyst who combines sharp wit with genuine market expertise. 
 You've analyzed thousands of startups, survived the dot-com bubble, watched WeWork implode, and have zero patience for derivative ideas.
@@ -122,39 +127,46 @@ Extract actual competitor names from the search results if found.
 Remember: Be brutally honest, genuinely funny, and secretly helpful."""
 
         try:
-            # We wrap the synchronous OpenAI call in a way that doesn't matter much for this demo 
+            # We wrap the synchronous OpenAI call in a way that doesn't matter much for this demo
             # (blocking loop for 1-2s is acceptable here)
             response = self.client.chat.completions.create(
                 model="openai/gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=1.2,
                 top_p=0.95,
                 max_tokens=1000,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
-            
+
             # Validate and return with all metrics
             analysis = StartupAnalysis(
                 verdict=result.get("verdict", "trash"),
-                roast=result.get("roast", "Our AI is speechless. That's either really good or really bad."),
+                roast=result.get(
+                    "roast",
+                    "Our AI is speechless. That's either really good or really bad.",
+                ),
                 competitors=result.get("competitors", [])[:10],
                 score=min(10, max(0, float(result.get("score", 5)))),
                 name_rating=result.get("name_rating", "Undetermined"),
                 advice=result.get("advice"),
                 market_size=result.get("market_size"),
-                originality_score=min(10, max(0, float(result.get("originality_score", 5)))) if result.get("originality_score") else None,
-                execution_difficulty=result.get("execution_difficulty")
+                originality_score=min(
+                    10, max(0, float(result.get("originality_score", 5)))
+                )
+                if result.get("originality_score")
+                else None,
+                execution_difficulty=result.get("execution_difficulty"),
             )
-            
+
             # Cache the successful response
             response_cache.set(cache_key, analysis)
             return analysis
-            
+
         except Exception as e:
             print(f"OpenAI error: {e}")
             return StartupAnalysis(
@@ -166,7 +178,7 @@ Remember: Be brutally honest, genuinely funny, and secretly helpful."""
                 advice="Try again when our servers recover from your pitch",
                 market_size="Unknown - Analysis failed",
                 originality_score=5.0,
-                execution_difficulty="Unknown"
+                execution_difficulty="Unknown",
             )
 
 
@@ -183,20 +195,26 @@ EXAMPLE_ROASTS = [
         "advice": "Consider a specific niche like luxury pet concierge or pet medical transport instead.",
         "market_size": "Saturated - $1.2B market with 50+ established players",
         "originality_score": 1.5,
-        "execution_difficulty": "Medium - Standard two-sided marketplace"
+        "execution_difficulty": "Medium - Standard two-sided marketplace",
     },
     {
         "name": "Netflix for Books",
         "description": "Unlimited ebook subscription service",
         "verdict": "trash",
         "roast": "Congratulations, you've invented the public library. Except somehow worse because now there's a monthly fee and worse selection.",
-        "competitors": ["Kindle Unlimited", "Audible", "Scribd", "Kobo Plus", "Libraries"],
+        "competitors": [
+            "Kindle Unlimited",
+            "Audible",
+            "Scribd",
+            "Kobo Plus",
+            "Libraries",
+        ],
         "score": 1.5,
         "name_rating": "Forgettable - Sounds like every other 'X for Y' pitch",
         "advice": "This literally exists in multiple forms. Find a genuine gap instead of repackaging.",
         "market_size": "Dominated - Amazon owns 80% of this space",
         "originality_score": 0.5,
-        "execution_difficulty": "High - Publisher licensing is a nightmare"
+        "execution_difficulty": "High - Publisher licensing is a nightmare",
     },
     {
         "name": "AI Therapist",
@@ -209,6 +227,6 @@ EXAMPLE_ROASTS = [
         "advice": "Focus on a specific condition or demographic. 'AI for everyone' means 'AI for no one'.",
         "market_size": "Growing - $5B digital mental health market",
         "originality_score": 4.0,
-        "execution_difficulty": "High - HIPAA, licensing, liability concerns"
-    }
+        "execution_difficulty": "High - HIPAA, licensing, liability concerns",
+    },
 ]

@@ -7,7 +7,8 @@ const EXAMPLES = [
     name: 'Uber for Dogs',
     verdict: 'trash',
     score: 2.5,
-    roast: "There are literally 47 dog walking apps. Your name sounds like a rejected SNL sketch.",
+    roast:
+      'There are literally 47 dog walking apps. Your name sounds like a rejected SNL sketch.',
     competitors: ['Rover', 'Wag', 'Barkly'],
     reaction: '💀',
   },
@@ -15,7 +16,8 @@ const EXAMPLES = [
     name: 'Netflix for Books',
     verdict: 'trash',
     score: 1.5,
-    roast: "Congratulations, you've invented the public library. Except somehow worse.",
+    roast:
+      "Congratulations, you've invented the public library. Except somehow worse.",
     competitors: ['Kindle Unlimited', 'Scribd', 'Library'],
     reaction: '📚',
   },
@@ -23,7 +25,7 @@ const EXAMPLES = [
     name: 'AI Therapist',
     verdict: 'potential',
     score: 5.5,
-    roast: "Oh great, another AI that wants to discuss my childhood trauma.",
+    roast: 'Oh great, another AI that wants to discuss my childhood trauma.',
     competitors: ['Woebot', 'Wysa', 'Replika'],
     reaction: '🤖',
   },
@@ -55,7 +57,8 @@ const VERDICT_CONFIG = {
 
 // DiceBear avatar for each example
 const getExampleAvatar = (name, verdict) => {
-  const style = verdict === 'trash' ? 'thumbs' : verdict === 'gold' ? 'lorelei' : 'bottts'
+  const style =
+    verdict === 'trash' ? 'thumbs' : verdict === 'gold' ? 'lorelei' : 'bottts'
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(name)}&backgroundColor=transparent`
 }
 
@@ -66,7 +69,10 @@ function ExamplesSection() {
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold mb-3">
             <span className="text-4xl mr-2">💀</span>
-            Hall of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">Shame</span>
+            Hall of{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+              Shame
+            </span>
           </h2>
           <p className="text-gray-500">
             These startups walked so yours could... also fail
@@ -77,20 +83,20 @@ function ExamplesSection() {
           {EXAMPLES.map((example, index) => {
             const config = VERDICT_CONFIG[example.verdict]
             return (
-              <Card 
-                key={index} 
+              <Card
+                key={index}
                 className={`group relative overflow-hidden bg-gradient-to-b ${config.gradient} backdrop-blur-sm ${config.border} border transition-all duration-300 hover:scale-[1.02] ${config.glow} hover:shadow-lg`}
               >
                 {/* Background reaction emoji */}
                 <div className="absolute -right-4 -top-4 text-7xl opacity-10 group-hover:opacity-20 transition-opacity">
                   {example.reaction}
                 </div>
-                
+
                 <CardHeader className="pb-2 relative z-10">
                   <div className="flex items-start gap-3">
                     <div className="relative">
-                      <img 
-                        src={getExampleAvatar(example.name, example.verdict)} 
+                      <img
+                        src={getExampleAvatar(example.name, example.verdict)}
                         alt={example.name}
                         className="w-12 h-12 rounded-xl bg-white/5 border border-white/10"
                       />
@@ -108,23 +114,25 @@ function ExamplesSection() {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="pt-2 relative z-10">
                   <p className="text-gray-400 text-sm italic mb-4 line-clamp-3 group-hover:text-gray-300 transition-colors">
                     "{example.roast}"
                   </p>
-                  
+
                   <div className="flex items-center justify-between pt-3 border-t border-white/5">
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-2xl font-bold ${config.scoreColor}`}>
+                      <span
+                        className={`text-2xl font-bold ${config.scoreColor}`}
+                      >
                         {example.score}
                       </span>
                       <span className="text-gray-600 text-sm">/10</span>
                     </div>
                     <div className="flex gap-1.5">
                       {example.competitors.slice(0, 2).map((c, i) => (
-                        <span 
-                          key={i} 
+                        <span
+                          key={i}
                           className="text-[10px] px-2 py-1 bg-white/5 rounded-full text-gray-500 border border-white/5"
                         >
                           {c}
