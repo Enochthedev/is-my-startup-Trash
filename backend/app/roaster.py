@@ -1,5 +1,4 @@
 import json
-import re
 from typing import List, Tuple
 from openai import OpenAI
 from ddgs import DDGS
@@ -78,13 +77,13 @@ class StartupRoaster:
         try:
             search_response = await self.search_competitors(name, description)
             if search_response:
-                search_results, search_context = search_response
+                _, search_context = search_response
             else:
                 print("Warning: search_competitors returned None")
-                search_results, search_context = [], "Search failed silently"
+                _, search_context = [], "Search failed silently"
         except Exception as e:
             print(f"Search unpacking error: {e}")
-            search_results, search_context = [], "Search error"
+            _, search_context = [], "Search error"
         
         # Build the prompt
         system_prompt = """You are a brutally honest startup analyst who combines sharp wit with genuine market expertise. 

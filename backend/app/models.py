@@ -88,12 +88,3 @@ class HealthResponse(BaseModel):
     message: str = "Ready to roast your dreams"
     version: str = "1.0.0"
 
-
-class StatsResponse(BaseModel):
-    """API statistics response."""
-    total_roasts: int = 0
-    trash_count: int = 0
-    potential_count: int = 0
-    gold_count: int = 0
-    average_score: float = 0.0
-    top_competitors_found: List[str] = []

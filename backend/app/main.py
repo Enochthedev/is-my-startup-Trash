@@ -1,4 +1,5 @@
 import os
+import random
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -37,8 +38,7 @@ We'll tell you if your startup is trash in seconds.
 )
 
 # CORS middleware for frontend
-# CORS middleware for frontend
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -105,10 +105,9 @@ async def analyze_startup(startup: StartupInput):
             raise HTTPException(
                 status_code=500,
                 detail="Our AI is having a breakdown. Even it couldn't handle your startup idea."
-            )
+            ) from e
     else:
         # Demo mode - return random example
-        import random
         example = random.choice(EXAMPLE_ROASTS)
         return StartupAnalysis(
             verdict=example["verdict"],
@@ -126,7 +125,6 @@ async def analyze_startup(startup: StartupInput):
 @app.get("/random-example", tags=["Examples"])
 async def get_random_example():
     """Get a random example to try - each click gives a different startup idea."""
-    import random
     example = random.choice(EXAMPLE_ROASTS)
     return {
         "name": example["name"],
@@ -137,7 +135,6 @@ async def get_random_example():
 @app.get("/examples", tags=["Examples"])
 async def get_examples():
     """Get all example startup roasts for inspiration (or warning)."""
-    import random
     # Return 3 random examples each time
     selected = random.sample(EXAMPLE_ROASTS, min(3, len(EXAMPLE_ROASTS)))
     return {
