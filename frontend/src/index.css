@@ -101,8 +101,8 @@
   --shadow-glow-primary: 0 0 40px rgba(129, 140, 248, 0.3);
 
   /* Typography */
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -136,7 +136,7 @@ body {
 
 /* Animated background */
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   top: 0;
   left: 0;

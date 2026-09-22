@@ -2,7 +2,11 @@
 
 .examples-section {
   padding: var(--space-3xl) var(--space-xl);
-  background: linear-gradient(180deg, transparent 0%, rgba(26, 26, 37, 0.5) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(26, 26, 37, 0.5) 100%
+  );
 }
 
 .examples-container {
@@ -37,7 +41,9 @@
 .example-card {
   padding: var(--space-xl);
   text-align: left;
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .example-card:hover {
@@ -127,7 +133,7 @@
   .examples-section {
     padding: var(--space-2xl) var(--space-md);
   }
-  
+
   .examples-grid {
     grid-template-columns: 1fr;
   }

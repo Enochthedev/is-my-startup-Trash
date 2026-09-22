@@ -1,10 +1,12 @@
 import os
+import random
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
-from .models import StartupInput, StartupAnalysis, HealthResponse
-from .roaster import StartupRoaster, EXAMPLE_ROASTS
+from .models import HealthResponse, StartupAnalysis, StartupInput
+from .roaster import EXAMPLE_ROASTS, StartupRoaster
 
 # Load environment variables
 load_dotenv()
@@ -33,12 +35,13 @@ We'll tell you if your startup is trash in seconds.
     """,
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS middleware for frontend
-# CORS middleware for frontend
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -60,7 +63,7 @@ async def root():
     return HealthResponse(
         status="healthy",
         message="Ready to crush your startup dreams 🔥",
-        version="1.0.0"
+        version="1.0.0",
     )
 
 
@@ -69,8 +72,10 @@ async def health_check():
     """Detailed health check."""
     return HealthResponse(
         status="healthy" if roaster else "degraded",
-        message="AI roaster ready" if roaster else "Running without OpenRouter (demo mode)",
-        version="1.0.0"
+        message="AI roaster ready"
+        if roaster
+        else "Running without OpenRouter (demo mode)",
+        version="1.0.0",
     )
 
 
@@ -78,10 +83,10 @@ async def health_check():
 async def analyze_startup(startup: StartupInput):
     """
     🔥 Analyze your startup idea and get brutally honest feedback.
-    
+
     We'll search the web for competitors, rate your name, and deliver
     a verdict that might hurt (but you need to hear it).
-    
+
     **Example request:**
     ```json
     {
@@ -89,13 +94,13 @@ async def analyze_startup(startup: StartupInput):
         "description": "On-demand dog walking app that connects pet owners with walkers"
     }
     ```
-    
+
     **Possible verdicts:**
     - `trash` - Sorry, this idea belongs in the bin
     - `potential` - Has issues, but might work
     - `gold` - Actually innovative (rare!)
     """
-    
+
     # Use the AI roaster if available
     if roaster:
         try:
@@ -104,11 +109,10 @@ async def analyze_startup(startup: StartupInput):
             print(f"Roaster error: {e}")
             raise HTTPException(
                 status_code=500,
-                detail="Our AI is having a breakdown. Even it couldn't handle your startup idea."
-            )
+                detail="Our AI is having a breakdown. Even it couldn't handle your startup idea.",
+            ) from e
     else:
         # Demo mode - return random example
-        import random
         example = random.choice(EXAMPLE_ROASTS)
         return StartupAnalysis(
             verdict=example["verdict"],
@@ -119,36 +123,32 @@ async def analyze_startup(startup: StartupInput):
             advice=example["advice"],
             market_size=example.get("market_size"),
             originality_score=example.get("originality_score"),
-            execution_difficulty=example.get("execution_difficulty")
+            execution_difficulty=example.get("execution_difficulty"),
         )
 
 
 @app.get("/random-example", tags=["Examples"])
 async def get_random_example():
     """Get a random example to try - each click gives a different startup idea."""
-    import random
     example = random.choice(EXAMPLE_ROASTS)
-    return {
-        "name": example["name"],
-        "description": example["description"]
-    }
+    return {"name": example["name"], "description": example["description"]}
 
 
 @app.get("/examples", tags=["Examples"])
 async def get_examples():
     """Get all example startup roasts for inspiration (or warning)."""
-    import random
     # Return 3 random examples each time
     selected = random.sample(EXAMPLE_ROASTS, min(3, len(EXAMPLE_ROASTS)))
     return {
         "examples": [
             {
                 "input": {"name": ex["name"], "description": ex["description"]},
-                "output": {k: v for k, v in ex.items() if k not in ["name", "description"]}
+                "output": {
+                    k: v for k, v in ex.items() if k not in ["name", "description"]
+                },
             }
             for ex in selected
         ],
         "total_examples": len(EXAMPLE_ROASTS),
-        "disclaimer": "These are just examples. Your actual roast will be unique."
+        "disclaimer": "These are just examples. Your actual roast will be unique.",
     }
-
